@@ -59,6 +59,9 @@ Tạo các nút lựa chọn thông qua hàm draw_button(x, y, width, height, te
     
 ## 🖼️ Hình ảnh minh họa 
 
+![8-puzzle-test](https://github.com/user-attachments/assets/cb0ad6b2-0e04-48b6-9e82-ab4c6f310b16)
 
-
-
+## 📚 Tài liệu tham khảo
+1. Artificial Intelligence: A Modern Approach – Stuart Russell & Peter Norvig
+2. https://www.geeksforgeeks.org/8-puzzle-problem-using-branch-and-bound/  
+3. https://github.com/rmssoares/8Puzzle-StateSpaceSearches
