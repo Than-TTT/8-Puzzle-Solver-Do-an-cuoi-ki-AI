@@ -6,7 +6,8 @@
 - Tính năng  
 - Thuật toán hỗ trợ  
 - Cài đặt  
-- Hình ảnh minh họa  
+- Hình ảnh minh họa
+- Các nhóm thuật toán giải game  
 - Tài liệu tham khảo
 
 ## 📖 Giới thiệu
