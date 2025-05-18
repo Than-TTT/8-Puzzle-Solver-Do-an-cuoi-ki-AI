@@ -1,4 +1,4 @@
-![DFS](https://github.com/user-attachments/assets/099ae3d6-5dbb-43db-b502-6aab2e2caf71)# 🧩 8-Puzzle Solver
+# 🧩 8-Puzzle Solver
 ### 📝 Họ và Tên: Trương Thanh Thành | MSSV: 23133069  
 
 ## 📌 Mục lục
