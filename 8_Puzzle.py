@@ -18,9 +18,9 @@ pygame.display.set_caption("8 Puzzle Solver")
 clock = pygame.time.Clock()
 
 # Khởi tạo trạng thái đầu và đích
-# INITIAL_STATE = ("2", "6", "5", "", "8", "7", "4", "3", "1")
+INITIAL_STATE = ("2", "6", "5", "", "8", "7", "4", "3", "1")
 # INITIAL_STATE = ("1", "2", "3", "4", "", "5", "6", "7", "8")
-INITIAL_STATE = ("1", "2", "3", "4", "5", "6", "7", "", "8")
+# INITIAL_STATE = ("1", "2", "3", "", "5", "6", "4", "7", "8")
 
 GOAL_STATE = ("1", "2", "3", "4", "5", "6", "7", "8", "")
 
@@ -421,11 +421,21 @@ def simulated_annealing_solve(initial_state):
     return path if current_state == GOAL_STATE else None
 
 #Thuật toán Genetic 
+
+def is_solvable(state):
+    state_list = [int(x) for x in state if x != ""]
+    inversions = 0
+    for i in range(len(state_list)):
+        for j in range(i + 1, len(state_list)):
+            if state_list[i] > state_list[j]:
+                inversions += 1
+    return inversions % 2 == 0
+
 def genetic_algorithm_solve(initial_state, population_size=50, generations=1000):
     import random
 
     def fitness(state):
-        return -manhattan_distance(state)  # Càng gần đích càng tốt
+        return -manhattan_distance(state)
 
     def is_valid_state(state):
         return (
@@ -435,70 +445,61 @@ def genetic_algorithm_solve(initial_state, population_size=50, generations=1000)
         )
 
     def mutate(state):
-
-
         if not is_valid_state(state):
             return state
-
         blank_index = get_blank_index(state)
-        if blank_index == -1:
-            return state  # bỏ qua mutation nếu không có ô trống
-
         neighbors = get_neighbors(blank_index)
-        if not neighbors:
-            return state
-
         new_state = list(state)
         move = random.choice(neighbors)
         new_state[blank_index], new_state[move] = new_state[move], new_state[blank_index]
         return tuple(new_state)
 
-
     def crossover(parent1, parent2):
-        split = random.randint(1, 7)
-        child = list(parent1[:split] + parent2[split:])
+        child = list(parent1)
+        start, end = sorted(random.sample(range(9), 2))
+        child[start:end] = parent2[start:end]
+        remaining = [x for x in parent2 if x not in child[start:end]]
+        j = 0
+        for i in range(9):
+            if i < start or i >= end:
+                child[i] = remaining[j]
+                j += 1
+        child = tuple(child)
+        if is_solvable(child):
+            return child
+        return parent1
 
-        # Loại bỏ trùng, thêm thiếu
-        seen = set()
-        new_child = []
-        for val in child:
-            if val not in seen:
-                seen.add(val)
-                new_child.append(val)
-
-        for val in ["1", "2", "3", "4", "5", "6", "7", "8", ""]:
-            if val not in new_child:
-                new_child.append(val)
-
-        return tuple(new_child)
-
-
+    # Khởi tạo quần thể
     population = [initial_state]
-    for _ in range(population_size - 1):
+    while len(population) < population_size:
         state = initial_state
-        for _ in range(10):  # Tạo ngẫu nhiên thêm các cá thể
+        for _ in range(10):
             blank = get_blank_index(state)
             state = swap_positions(state, blank, random.choice(get_neighbors(blank)))
-        population.append(state)
+        if is_solvable(state) and state not in population:
+            population.append(state)
 
+    best_state = initial_state
+    best_path = [best_state]
     for _ in range(generations):
         population.sort(key=fitness, reverse=True)
         if population[0] == GOAL_STATE:
-            return [population[0]]
+            return best_path + [GOAL_STATE]
+        if fitness(population[0]) > fitness(best_state):
+            best_state = population[0]
+            best_path.append(best_state)
 
-        next_generation = population[:5]  # giữ lại 5 cá thể tốt nhất
-
+        next_generation = population[:10]  # Giữ 20% tốt nhất
         while len(next_generation) < population_size:
             p1, p2 = random.sample(population[:20], 2)
             child = crossover(p1, p2)
-            if random.random() < 0.3:
+            if random.random() < 0.1:  # Xác suất đột biến 0.1
                 child = mutate(child)
-            next_generation.append(child)
-
+            if is_solvable(child):
+                next_generation.append(child)
         population = next_generation
 
-    return [population[0]] if population[0] == GOAL_STATE else None
-
+    return None
 
 def and_or_search_solve(initial_state, max_depth=50):
     stack = [(initial_state, [initial_state], 0)]
@@ -646,30 +647,6 @@ def csp_solve(start_state):
     found = backtrack(start_state, 0)
     return path[::-1] if found else None
 
-def is_goal(state):
-    return state == GOAL_STATE
-
-# def search_with_no_observation(_):
-#     belief_states = set(generate_all_states())
-#     path = []
-#     max_steps = 50
-
-#     for _ in range(max_steps):
-#         new_beliefs = set()
-#         for state in belief_states:
-#             blank_index = get_blank_index(state)
-#             if blank_index == -1:
-#                 continue
-#             for move in get_neighbors(blank_index):
-#                 new_state = swap_positions(state, blank_index, move)
-#                 new_beliefs.add(new_state)
-#         belief_states = new_beliefs
-#         path.append("unknown_action")
-
-#         if all(is_goal(state) for state in belief_states):
-#             return path
-
-#     return None  # Không thể chắc chắn đến goal trong giới hạn bước
 
 def search_with_no_observation(initial_state):
     from collections import deque
@@ -921,7 +898,7 @@ def main():
         for state in solution_path:
             
             draw_board(state, f"Dang giai bang {selected_algorithm.upper()}...", runtime)
-            pygame.time.delay(500)
+            pygame.time.delay(250)
         draw_board(GOAL_STATE, "Done.....", runtime)
         print(solution_path)
         print("So Buoc:", len(solution_path))
